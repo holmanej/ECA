@@ -1,0 +1,10 @@
+# VS local configuration:
+*.csproj.user
+*.VC.db
+*.VC.opendb
+.vs/
+
+# VS build output:
+bin/
+obj/
+x64/

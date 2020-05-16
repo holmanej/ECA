@@ -33,13 +33,14 @@ namespace ECA
             Label rule_Label = new Label()
             {
                 Location = new Point(20, 20),
-                Text = "Rule Number"
+                Size = new Size(150, 20),
+                Text = "Rule Number [0-255]"
             };
             controlPanel.Controls.Add(rule_Label);
             TextBox rule_TextBox = new TextBox()
             {
                 Location = new Point(20, 50),
-                Size = new Size(100, 30),
+                Size = new Size(100, 20),
                 Text = "30"
             };
             controlPanel.Controls.Add(rule_TextBox);
@@ -48,7 +49,7 @@ namespace ECA
             {
                 Location = new Point(20, 100),
                 Size = new Size(150, 20),
-                Text = "Density Percentage"
+                Text = "Density Percentage [0-100]"
             };
             controlPanel.Controls.Add(random_Label);
             CheckBox random_CheckBox = new CheckBox()

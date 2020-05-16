@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,7 +18,7 @@ namespace ECA
 
         private ECA eca;
         private Bitmap Pattern = new Bitmap(1, 1);
-        private Size renderArea = new Size(3000, 1100);
+        private Rectangle renderArea = new Rectangle(0, 0, 3000, 1100);
 
         public Form1()
         {
@@ -128,29 +130,46 @@ namespace ECA
             TextBox log = (TextBox)CC[6];
             log.Clear();
 
-            Pattern = new Bitmap(renderArea.Width, renderArea.Height);
+            Pattern = new Bitmap(renderArea.Width, renderArea.Height, PixelFormat.Format32bppRgb);
             Graphics gfx = CreateGraphics();
             SolidBrush grayBrush = new SolidBrush(Color.Gray);
             gfx.FillRectangle(grayBrush, b.Parent.Width, 0, Width - b.Parent.Width, Height);
 
-            eca = new ECA(rule, density, cb.Checked, renderArea);
+            eca = new ECA(rule, density, cb.Checked, renderArea.Size);
+
+            BitmapData bmpData = Pattern.LockBits(renderArea, ImageLockMode.ReadWrite, PixelFormat.Format32bppRgb);
+            IntPtr ptr = bmpData.Scan0;
+            int bytes = Math.Abs(bmpData.Stride) * Pattern.Height;
+            Debug.WriteLine(bytes);
+            byte[] patternValues = new byte[bytes];
+            Marshal.Copy(ptr, patternValues, 0, bytes);
 
             for (int i = 0; i < renderArea.Height - 1; i++)
             {
-                for (int j = 0; j < renderArea.Width - 1; j++)
-                {
-                    if (eca.Field[j, i] == 1)
-                    {
-                        Pattern.SetPixel(j, i, Color.Black);
-                    }
-                    else
-                    {
-                        Pattern.SetPixel(j, i, Color.White);
-                    }
-                }
+                Parallel.For(0, renderArea.Width - 1, (j) =>
+               {
+                   int coordinate = (i * 4 * renderArea.Width) + (j * 4);
+                   if (eca.Field[j, i] == 1)
+                   {
+                       patternValues[coordinate] = 0;
+                       patternValues[coordinate + 1] = 0;
+                       patternValues[coordinate + 2] = 0;
+                       patternValues[coordinate + 3] = 255;
+
+                   }
+                   else
+                   {
+                       patternValues[coordinate] = 255;
+                       patternValues[coordinate + 1] = 255;
+                       patternValues[coordinate + 2] = 255;
+                       patternValues[coordinate + 3] = 255;
+                   }
+               });
                 log.Clear();
-                log.AppendText(((i * 1000) / renderArea.Height) / 10 + "%");
+                log.AppendText(i * 1000 / renderArea.Height / 10 + "%");
             }
+            Marshal.Copy(patternValues, 0, ptr, bytes);
+            Pattern.UnlockBits(bmpData);
             gfx.DrawImage(CropPattern(), 205, 5);
             log.Clear();
             log.AppendText("100%\r\nDone!");

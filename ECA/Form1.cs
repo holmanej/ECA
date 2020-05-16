@@ -18,7 +18,7 @@ namespace ECA
 
         private ECA eca;
         private Bitmap Pattern = new Bitmap(1, 1);
-        private Rectangle renderArea = new Rectangle(0, 0, 3000, 1100);
+        private Rectangle renderArea;
 
         public Form1()
         {
@@ -130,6 +130,7 @@ namespace ECA
             TextBox log = (TextBox)CC[6];
             log.Clear();
 
+            renderArea = new Rectangle(0, 0, Width + Height, Height);
             Pattern = new Bitmap(renderArea.Width, renderArea.Height, PixelFormat.Format32bppRgb);
             Graphics gfx = CreateGraphics();
             SolidBrush grayBrush = new SolidBrush(Color.Gray);
@@ -140,7 +141,6 @@ namespace ECA
             BitmapData bmpData = Pattern.LockBits(renderArea, ImageLockMode.ReadWrite, PixelFormat.Format32bppRgb);
             IntPtr ptr = bmpData.Scan0;
             int bytes = Math.Abs(bmpData.Stride) * Pattern.Height;
-            Debug.WriteLine(bytes);
             byte[] patternValues = new byte[bytes];
             Marshal.Copy(ptr, patternValues, 0, bytes);
 

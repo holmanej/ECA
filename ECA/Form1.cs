@@ -16,6 +16,7 @@ namespace ECA
 
         private ECA eca;
         private Bitmap Pattern = new Bitmap(1, 1);
+        private Size renderArea = new Size(3000, 1100);
 
         public Form1()
         {
@@ -88,7 +89,7 @@ namespace ECA
             Size area = new Size(Width - 200, Height);
             SolidBrush grayBrush = new SolidBrush(Color.Gray);
             gfx.FillRectangle(grayBrush, 200, 0, area.Width, area.Height);
-            gfx.DrawImage(Pattern, 205, 5);
+            gfx.DrawImage(CropPattern(), 205, 5);
         }
 
         private void Generate_Button_Click(object sender, EventArgs e)
@@ -126,19 +127,16 @@ namespace ECA
             TextBox log = (TextBox)CC[6];
             log.Clear();
 
-            Size area = new Size(Width - 200, Height);
-            Pattern = new Bitmap(area.Width, area.Height);
+            Pattern = new Bitmap(renderArea.Width, renderArea.Height);
             Graphics gfx = CreateGraphics();
             SolidBrush grayBrush = new SolidBrush(Color.Gray);
-            gfx.FillRectangle(grayBrush, 200, 0, area.Width, area.Height);
+            gfx.FillRectangle(grayBrush, b.Parent.Width, 0, Width - b.Parent.Width, Height);
 
-            area.Width -= 5;
-            area.Height -= 5;
-            eca = new ECA(rule, density, cb.Checked, area);
+            eca = new ECA(rule, density, cb.Checked, renderArea);
 
-            for (int i = 0; i < area.Height - 1; i++)
+            for (int i = 0; i < renderArea.Height - 1; i++)
             {
-                for (int j = 0; j < area.Width - 1; j++)
+                for (int j = 0; j < renderArea.Width - 1; j++)
                 {
                     if (eca.Field[j, i] == 1)
                     {
@@ -150,11 +148,21 @@ namespace ECA
                     }
                 }
                 log.Clear();
-                log.AppendText(((i * 1000) / area.Height) / 10 + "%");
+                log.AppendText(((i * 1000) / renderArea.Height) / 10 + "%");
             }
-            gfx.DrawImage(Pattern, 205, 5);
+            gfx.DrawImage(CropPattern(), 205, 5);
             log.Clear();
             log.AppendText("100%\r\nDone!");
+        }
+
+        private Bitmap CropPattern()
+        {
+            int w = Width - 200;
+            int h = Height;
+            Bitmap b = new Bitmap(w, h);
+            Graphics g = Graphics.FromImage(b);
+            g.DrawImage(Pattern, new Rectangle(0, 0, w, h), new Rectangle((Pattern.Width - w) / 2, 0, w, h), GraphicsUnit.Pixel);
+            return b;
         }
     }
 }

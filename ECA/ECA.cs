@@ -1,19 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Windows.Forms;
 
 namespace ECA
 {
     class ECA
     {
         private Dictionary<int, int> Table = new Dictionary<int, int>();
-        public int[,] Field = new int[1000,1000];
+        public int[,] Field;
         public bool ready;
 
-        public ECA(int rule, int density, bool random)
+        public ECA(int rule, int density, bool random, Size area)
         {
             ready = false;
             for (int i = 0; i < 8; i++)
@@ -23,30 +25,32 @@ namespace ECA
                 rule /= 2;
             }
 
+            Field = new int[area.Width, area.Height];
+
             if (random)
             {
                 Random rand = new Random();
-                for (int i = 0; i < 1000; i++)
+                for (int i = 0; i < area.Width - 1; i++)
                 {
                     Field[i, 0] = rand.Next(0, 100) < density ? 1 : 0;
                 }
             }
             else
             {
-                Field[499, 0] = 1;
+                Field[area.Width / 2, 0] = 1;
             }
 
-            for (int i = 1; i < 1000; i++)
+            for (int i = 1; i < area.Height - 2; i++)
             {
                 Field[0, i] = Table[(Field[0, i - 1] * 2) + Field[1, i - 1]];
 
-                for (int j = 1; j < 999; j++)
+                for (int j = 1; j < area.Width - 3; j++)
                 {
                     int key = (Field[j - 1, i - 1] * 4) + (Field[j, i - 1] * 2) + Field[j + 1, i - 1];
                     Field[j, i] = Table[key];
                 }
 
-                Field[999, i] = Table[(Field[998, i - 1] * 4) + (Field[999, i - 1] * 2)];
+                Field[area.Width - 1, i] = Table[(Field[area.Width - 2, i - 1] * 4) + (Field[area.Width - 1, i - 1] * 2)];
             }
             ready = true;
         }

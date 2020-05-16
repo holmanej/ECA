@@ -15,19 +15,18 @@ namespace ECA
     {
 
         private ECA eca;
-        private static Rectangle screen = Screen.PrimaryScreen.Bounds;
-        private static Rectangle field = new Rectangle(screen.Width - 1005, 5, 1000, 1000);
-        private static Rectangle border = new Rectangle(screen.Width - 1010, 0, 1010, 1010);
+        private Bitmap Pattern = new Bitmap(1, 1);
 
         public Form1()
         {
             InitializeComponent();
             WindowState = FormWindowState.Maximized;
+            Paint += Form1_Paint;
 
             Panel controlPanel = new Panel()
             {
-                Location = new Point(0, 0),
-                Size = new Size(screen.Width - 1010, screen.Height)
+                Location = Location,
+                Size = new Size(200, Height)
             };
             Controls.Add(controlPanel);
             Label rule_Label = new Label()
@@ -83,6 +82,15 @@ namespace ECA
             controlPanel.Controls.Add(log_TextBox);
         }
 
+        private void Form1_Paint(object sender, PaintEventArgs e)
+        {
+            Graphics gfx = CreateGraphics();
+            Size area = new Size(Width - 200, Height);
+            SolidBrush grayBrush = new SolidBrush(Color.Gray);
+            gfx.FillRectangle(grayBrush, 200, 0, area.Width, area.Height);
+            gfx.DrawImage(Pattern, 205, 5);
+        }
+
         private void Generate_Button_Click(object sender, EventArgs e)
         {
             Button b = (Button)sender;
@@ -114,34 +122,39 @@ namespace ECA
                 density = 100;
                 CC[4].Text = "100";
             }
-            eca = new ECA(rule, density, cb.Checked);
 
             TextBox log = (TextBox)CC[6];
             log.Clear();
 
-            Bitmap pattern = new Bitmap(1000, 1000);
+            Size area = new Size(Width - 200, Height);
+            Pattern = new Bitmap(area.Width, area.Height);
             Graphics gfx = CreateGraphics();
             SolidBrush grayBrush = new SolidBrush(Color.Gray);
-            gfx.FillRectangle(grayBrush, border);
+            gfx.FillRectangle(grayBrush, 200, 0, area.Width, area.Height);
 
-            for (int i = 0; i < 1000; i++)
+            area.Width -= 5;
+            area.Height -= 5;
+            eca = new ECA(rule, density, cb.Checked, area);
+
+            for (int i = 0; i < area.Height - 1; i++)
             {
-                for (int j = 0; j < 1000; j++)
+                for (int j = 0; j < area.Width - 1; j++)
                 {
                     if (eca.Field[j, i] == 1)
                     {
-                        pattern.SetPixel(j, i, Color.Black);
+                        Pattern.SetPixel(j, i, Color.Black);
                     }
                     else
                     {
-                        pattern.SetPixel(j, i, Color.White);
+                        Pattern.SetPixel(j, i, Color.White);
                     }
                 }
                 log.Clear();
-                log.AppendText((i + 1) / 10 + "%");
+                log.AppendText(((i * 1000) / area.Height) / 10 + "%");
             }
-            gfx.DrawImage(pattern, field.Location);
-            log.AppendText("\r\nDone!");
+            gfx.DrawImage(Pattern, 205, 5);
+            log.Clear();
+            log.AppendText("100%\r\nDone!");
         }
     }
 }

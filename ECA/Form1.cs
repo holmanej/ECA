@@ -142,7 +142,10 @@ namespace ECA
             IntPtr ptr = bmpData.Scan0;
             int bytes = Math.Abs(bmpData.Stride) * Pattern.Height;
             byte[] patternValues = new byte[bytes];
-            Marshal.Copy(ptr, patternValues, 0, bytes);
+            Func<double, double> Sigmoid = x => 1 / (1 + Math.Exp(-20 * (x - 0.5)));
+            Func<double, double> Linear = x => x;
+            List<Color> fg = Gradient(Color.FromArgb(0xFF, 0xFF, 0x11, 0xBB), Color.FromArgb(0xFF, 0x00, 0xBB, 0xBB), renderArea.Height, Sigmoid);
+            List<Color> bg = Gradient(Color.Black, Color.Black, renderArea.Height, Linear);
 
             for (int i = 0; i < renderArea.Height - 1; i++)
             {
@@ -151,18 +154,17 @@ namespace ECA
                    int coordinate = (i * 4 * renderArea.Width) + (j * 4);
                    if (eca.Field[j, i] == 1)
                    {
-                       patternValues[coordinate] = 0;
-                       patternValues[coordinate + 1] = 0;
-                       patternValues[coordinate + 2] = 0;
-                       patternValues[coordinate + 3] = 255;
-
+                       patternValues[coordinate] = fg[i].B;
+                       patternValues[coordinate + 1] = fg[i].G;
+                       patternValues[coordinate + 2] = fg[i].R;
+                       patternValues[coordinate + 3] = 0;
                    }
                    else
                    {
-                       patternValues[coordinate] = 255;
-                       patternValues[coordinate + 1] = 255;
-                       patternValues[coordinate + 2] = 255;
-                       patternValues[coordinate + 3] = 255;
+                       patternValues[coordinate] = bg[i].B;
+                       patternValues[coordinate + 1] = bg[i].G;
+                       patternValues[coordinate + 2] = bg[i].R;
+                       patternValues[coordinate + 3] = 0;
                    }
                });
                 log.Clear();
@@ -173,6 +175,30 @@ namespace ECA
             gfx.DrawImage(CropPattern(), 205, 5);
             log.Clear();
             log.AppendText("100%\r\nDone!");
+
+            CropPattern().Save("pic.bmp", ImageFormat.Bmp);
+        }
+
+        private List<Color> Gradient(Color start, Color end, int rows, Func<double, double> transform)
+        {
+            List<Color> gradient = new List<Color>();
+
+            double dR = end.R - start.R;
+            double dG = end.G - start.G;
+            double dB = end.B - start.B;
+            double dA = end.A - start.A;
+
+            for (double i = 0; i < rows; i++)
+            {
+                double scale = transform((double)i / rows);
+                int red = Math.Min((int)(dR * scale) + start.R, 255);
+                int green = Math.Min((int)(dG * scale) + start.G, 255);
+                int blue = Math.Min((int)(dB * scale) + start.B, 255);
+                int alpha = Math.Min((int)(dA * scale) + start.A, 255);
+                gradient.Add(Color.FromArgb(alpha, red, green, blue));
+            }
+
+            return gradient;
         }
 
         private Bitmap CropPattern()
